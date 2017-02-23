@@ -205,6 +205,11 @@ SSDP_TYPE SSDPParser::GetType(){
 
 int SSDPParser::ReadLine(u8 *buf, u32 len, u8 **restbuf, u32 *restlen){
     int ret = 0;
+    
+    // If len is <2 it's not possible that we're going to find \r\n
+    if (len < 2) {
+        return -1;
+    }
 
     //Search the \r\n
     u8 *pos = buf;
@@ -212,12 +217,16 @@ int SSDPParser::ReadLine(u8 *buf, u32 len, u8 **restbuf, u32 *restlen){
         pos++;
     }
     // \r\n or eof
-    if(pos > buf){
+    if(pos > buf && pos < (u8*)(buf+(len-1))) {
         pos++;
         pos++;
         *restlen = (unsigned int)((buf+len)-pos);
-        *restbuf = pos;
-        ret = (unsigned int)((pos-buf)-2);
+        if( *restlen == 0 ){
+            ret = -1;//eof
+        }else{
+            *restbuf = pos;
+            ret = (unsigned int)((pos-buf)-2);
+        }
     }else{
         ret = -1;//eof
     }
